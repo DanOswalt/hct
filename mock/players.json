@@ -1,0 +1,52 @@
+[
+  {
+    "name": "Jonn",
+    "id": 76,
+    "chips": 9,
+    "currentHand" : {
+      "card" : {
+        "name" : "As",
+        "value" : 52
+      },
+      "bet" : 4,
+      "rank" : 1
+    }
+  },
+  {
+    "name": "Mack",
+    "id": 44,
+    "chips": 10,
+    "currentHand" : null
+  },
+  {
+    "name": "Jill",
+    "id": 19,
+    "chips": 3,
+    "currentHand" : {
+      "card" : {
+        "name" : "Ah",
+        "value" : 51
+      },
+      "bet" : 3,
+      "rank" : 2
+    }
+  },
+  {
+    "name": "Bill",
+    "id": 22,
+    "chips": 2,
+    "currentHand" : null
+  },
+  {
+    "name": "Doug",
+    "id": 17,
+    "chips": 80,
+    "currentHand" : null
+  },
+  {
+    "name": "Will",
+    "id": 2,
+    "chips": 17,
+    "currentHand" : null
+  }
+]
