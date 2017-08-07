@@ -3,14 +3,7 @@
     "name": "Jonn",
     "id": 76,
     "chips": 9,
-    "currentHand" : {
-      "card" : {
-        "name" : "As",
-        "value" : 52
-      },
-      "bet" : 4,
-      "rank" : 1
-    }
+    "currentHand" : null
   },
   {
     "name": "Mack",
@@ -22,14 +15,7 @@
     "name": "Jill",
     "id": 19,
     "chips": 3,
-    "currentHand" : {
-      "card" : {
-        "name" : "Ah",
-        "value" : 51
-      },
-      "bet" : 3,
-      "rank" : 2
-    }
+    "currentHand" : null
   },
   {
     "name": "Bill",
