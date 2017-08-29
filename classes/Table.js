@@ -1,39 +1,8 @@
 const SAK = require('./SwissArmyKnife');
-const mockPlayers = require('./mock/players.json');
-
-
-
-// const getPlayerById = (id, players) => {
-//   for(let i = 0; i < players.length; i +=1 ) {
-//     if (id === players[i].id) {
-//       return players[i];
-//     }
-//   }
-//   return -1;
-// }
-//
-// const startingChips = 3;
-
-/*
-
-Order of states for the Table
-
-//pre hand
--Instantiated (has nothing more than an id supplied by Tournament)
--Seating players (Tournament gives an array of player ids)
-(This would either be just after instantiation, or when balancing tables)
-
-//hand
--Begin Hand (Tournament gives the go ahead)
--Moving Blind/Active seat (skip over empty seats)
--Deal Hand (card given to each player)
--Ask each player for a decision
-
-//
-
-
-*/
-
+const Card = require('./Card');
+const PlayerHand = require('./PlayerHand');
+const prompt = require('prompt');
+const clear = require('clear');
 
 
 class Table extends SAK {
@@ -62,10 +31,31 @@ class Table extends SAK {
       bettors : []
     }
     this.blindSeatIndex = this.randNum(0,5);
-    this.activeSeatIndex = this.blindSeatIndex > 5 ? 0 : this.blindSeatIndex + 1;
+    this.activeSeatIndex = this.blindSeatIndex === 5 ? 0 : this.blindSeatIndex + 1;
+    this.tournament = opts.tournament;
+    this.status = "initializing";
   }
 
+  createNewDeck() {
+    const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+    const suits = ['c', 'd', 'h', 's'];
+    let value = 1;
 
+    //start with empty deck
+    this.deck = [];
+
+    ranks.forEach(rank => {
+      suits.forEach(suit => {
+        this.deck.push({
+          name: rank + suit,
+          value: value
+        });
+        value += 1;
+      });
+    });
+
+    this.shuffle(this.deck);
+  }
 
   createPots() {
     //private function to check for equality
@@ -123,39 +113,43 @@ class Table extends SAK {
     return pots;
   }
 
+  dealACard() {
+    return this.deck.pop();
+  }
 
+  dealHand(players) {
+    const thisTable = this;
+    players.forEach(player => {
+      player.currentHand = new PlayerHand(thisTable.dealACard());
+    })
+  }
 
-  filterPotMembers(pot) {
-    return this.allPlayersAtTable.filter((player) => {
+  filterPotMembers(players, pot) {
+    return players.filter((player) => {
       return pot.members.some((memberId) => {
         return player.id === memberId;
       });
     });
   }
 
-
-
-  findWinnersOfAllPots(pots) {
+  findWinnersOfAllPots(players, pots) {
     return pots.map((pot) => {
-      return this.getWinnerOfPot(pot, this.filterPotMembers(pot, this.allPlayersAtTable));
+      return this.getWinnerOfPot(pot, this.filterPotMembers(players, pot));
     });
   }
 
-
-
-  getBetsFromPlayersWithHands() {
-    const players = this.getPlayersAtTable();
+  getBetsFromPlayersWithHands(players) {
+    // const players = this.getPlayersAtTable();
     return players.filter(player => {
       return player.currentHand;
     }).map((player) => {
+      //console.log(player.currentHand.wager);
       return {
         playerId : player.id,
-        chips : player.currentHand.bet
+        chips : player.currentHand.wager
       }
     })
   }
-
-
 
   getEmptySeatCount() {
     let count = 0;
@@ -167,15 +161,50 @@ class Table extends SAK {
     return count;
   }
 
+  getPlayerById(id, players) {
+    for(let i = 0; i < players.length; i += 1 ) {
+      if (id === players[i].id) {
+        return players[i];
+      }
+    }
+    return -1;
+  }
 
-
-  getPlayersAtTable() {
+  getPlayersAtTable(allPlayers) {
     return this.listPlayerIdsAtTable().map(id => {
-      return getPlayerById(id, mockPlayers);
+      return this.getPlayerById(id, allPlayers);
     });
   }
 
+  getWagers(players, ante) {
+    players.forEach((player, i) => {
+      let playerIsThinking = false;
 
+      while(!playerIsThinking) {
+        playerIsThinking = true;
+        if(player.isHuman && this.blindSeatIndex !== i) {
+          //pause and get decision from human
+          console.log('hi');
+          playerIsThinking = false;
+        } else if(this.blindSeatIndex === i) {
+          player.call(ante);
+
+          console.log(player.currentHand);
+          playerIsThinking = false;
+        } else {
+          //setInterval here w/ player's delay
+          setTimeout(() => {
+            player.fold();
+            console.log(player.currentHand);
+            playerIsThinking = false;
+          }, 1000);
+        }
+      }
+
+    });
+
+    this.setStatus("playerActionsFinished");
+  }
 
   getWinnerOfPot(pot, members) {
     let topRank = 10;
@@ -192,20 +221,17 @@ class Table extends SAK {
     return pot;
   }
 
-
-
-  handoutStartingChips(startingChips) {
-
+  handoutStartingChips(startingChips, playersAtTable) {
+    playersAtTable.forEach(player => {
+      return player.chips = startingChips;
+    });
   }
 
-
-
-  init(startingChips) {
+  init(playerIds, startingChips, allPlayers) {
     this.seatPlayers(playerIds);
-    this.handoutStartingChips(startingChips);
+    const playersAtTable = this.getPlayersAtTable(allPlayers);
+    this.handoutStartingChips(startingChips, playersAtTable);
   }
-
-
 
   listPlayerIdsAtTable() {
     return this.seats.map(seat => {
@@ -213,15 +239,36 @@ class Table extends SAK {
     });
   }
 
+  playHand(players, ante) {
 
+    //animation of round, everything will be decided immediately for round,
+    //but the animation will need to happen slowly,
+    //and the human player(s) will need to be paused to wait for decision
 
-  playHand() {
-    this.currentHand.bettors = this.getBetsFromPlayersWithHands();
-    //finalTable.refundOverBets(bettors);
-    return this.findWinnersOfAllPots(this.createPots(this.currentHand.bettors));
+    //before animation is created, we can just have the human decide first (unless on blind)
+
+    this.setStatus("playerActionsPending");
+
+    this.createNewDeck();
+    this.dealHand(players);
+    this.rankHands(players);
+    this.getWagers(players, ante);
+    //console.log('after wagers:', players);
+    //console.log('blindseat:', this.blindSeatIndex);
+
+    this.currentHand.bettors = this.getBetsFromPlayersWithHands(players);
+    //this.refundOverBets(bettors);
+    //this.subtractWagers();
+    return this.findWinnersOfAllPots(players, this.createPots(this.currentHand.bettors));
   }
 
+  rankHands(players) {
+    players.sort((a, b) => {a.currentHand.value - b.currentHand.value});
+    players.forEach((player, index) => {
+      player.currentHand.rank = index + 1;
+    })
 
+  }
 
   refundOverBets() {
     //if only one bettor, the blind is the only person in the hand.
@@ -237,8 +284,6 @@ class Table extends SAK {
     }
   }
 
-
-
   seatPlayers(playerIds) {
     const ids = this.shuffle(playerIds);
     this.seats.filter(seat => {
@@ -247,6 +292,13 @@ class Table extends SAK {
       emptySeat.occupant = ids[index];
     });
   }
+
+  setStatus(statusString) {
+    const oldStatus = this.status;
+    this.status = statusString;
+    console.log(`${oldStatus} ===> ${this.status}`);
+  }
+
 }
 
 module.exports = Table;

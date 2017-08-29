@@ -1,55 +1,13 @@
 //Swiss Army Knife. Or sak of tools.
 
 class SAK {
+  capitalise(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+  };
 
-  //no constructor
-
-  testMe(hello) {
-    console.log('knife says:', hello);
+  coinFlip() {
+    return this.randNum(1, 2) === 1;
   }
-
-
-
-
-  randNum(min,max) {
-    return Math.floor(Math.random()*(max-min+1)+min);
-  }
-
-
-
-
-  shuffle(array) {
-    var counter = array.length;
-
-    // While there are elements in the array
-    while (counter > 0) {
-        // Pick a random index
-        var index = Math.floor(Math.random() * counter);
-
-        // Decrease counter by 1
-        counter--;
-
-        // And swap the last element with it
-        var temp = array[counter];
-        array[counter] = array[index];
-        array[index] = temp;
-    }
-
-    return array;
-  }
-
-
-
-
-  sum(array) {
-    var result = array.reduce(function(a, b) {
-      return a + b;
-    }, 0);
-    return result;
-  }
-
-
-
 
   randName() {
     const chars = this.randNum(3,8);
@@ -103,15 +61,40 @@ class SAK {
     return word;
   };
 
+  randNum(min,max) {
+    return Math.floor(Math.random()*(max-min+1)+min);
+  }
 
+  shuffle(array) {
+    var counter = array.length;
 
+    // While there are elements in the array
+    while (counter > 0) {
+        // Pick a random index
+        var index = Math.floor(Math.random() * counter);
 
-  capitalise(string) {
-    return string.charAt(0).toUpperCase() + string.slice(1);
-  };
+        // Decrease counter by 1
+        counter--;
 
+        // And swap the last element with it
+        var temp = array[counter];
+        array[counter] = array[index];
+        array[index] = temp;
+    }
 
+    return array;
+  }
 
+  sum(array) {
+    var result = array.reduce(function(a, b) {
+      return a + b;
+    }, 0);
+    return result;
+  }
+
+  testMe(hello) {
+    console.log('knife says:', hello);
+  }
 
 }
 
